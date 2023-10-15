@@ -6,7 +6,7 @@ Version: 1.0
 Author: Tu Nombre
 */
 
-require_once(__DIR__ . '/config.php');
+require_once(__DIR__ . 'otros/config.php');
 
 // Función para cargar el archivo CSS del plugin
 function load_plugin_styles() {
