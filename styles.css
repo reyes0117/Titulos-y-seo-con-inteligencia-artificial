@@ -1,18 +1,13 @@
-/* styles.css */
-
-#plugin-container {
-    margin: 20px;
-    padding: 20px;
-    border: 1px solid #ccc;
-    background-color: #f9f9f9;
+/* Estilos para los títulos generados */
+.titles-generated {
+    margin-top: 20px;
+    font-weight: bold;
+    color: #333;
 }
 
-h2 {
-    font-size: 1.5em;
-    margin-bottom: 10px;
+/* Estilos para las palabras clave generadas */
+.keywords-generated {
+    margin-top: 20px;
+    color: #777;
 }
 
-select, input[type="submit"] {
-    padding: 5px;
-    margin: 5px 0;
-}
