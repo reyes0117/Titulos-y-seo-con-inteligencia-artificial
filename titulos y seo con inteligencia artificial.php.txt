@@ -1,0 +1,150 @@
+<?php
+/*
+Plugin Name: Último Borrador Checker con Títulos Generados, Reemplazo y Palabras Clave SEO
+Description: Comprueba si la última nota está guardada como borrador, genera 5 títulos llamativos, permite reemplazar el título y genera palabras clave de SEO.
+*/
+
+// Revisar la última nota y generar títulos llamativos
+function check_last_post_draft_and_generate_titles() {
+    $args = array(
+        'numberposts' => 1,
+        'post_status' => 'draft', // Verificar si la última nota está en estado de borrador
+    );
+
+    $last_post = wp_get_recent_posts($args);
+
+    if (!empty($last_post)) {
+        echo "La última nota está en estado de borrador.";
+        $last_post_content = $last_post[0]['post_content'];
+        $last_post_id = $last_post[0]['ID'];
+
+        // Llamada a la API de ChatGPT para generar 5 títulos llamativos
+        $api_key = 'TU_CLAVE_DE_API'; // Reemplaza con tu clave de API de ChatGPT
+        $api_endpoint = 'https://api.openai.com/v1/engines/davinci/completions';
+        
+        $headers = array(
+            'Authorization: Bearer ' . $api_key,
+            'Content-Type: application/json',
+        );
+
+        $data = array(
+            'prompt' => "Genera 5 títulos llamativos para mi nota: $last_post_content",
+            'max_tokens' => 50, // Ajusta según tus necesidades
+            'n' => 5, // Generar 5 títulos
+        );
+
+        $response = wp_safe_remote_post($api_endpoint, array(
+            'headers' => $headers,
+            'body' => json_encode($data),
+        ));
+
+        if (is_wp_error($response)) {
+            echo "Error al conectar con la API de ChatGPT.";
+        } else {
+            $titles = json_decode(wp_remote_retrieve_body($response), true);
+
+            if (!empty($titles['choices'])) {
+                echo "<h3>Títulos Generados:</h3>";
+                echo "<ul>";
+                foreach ($titles['choices'] as $index => $title) {
+                    echo "<li>Título " . ($index + 1) . ": " . esc_html($title['text']) . "</li>";
+                }
+                echo "</ul>";
+
+                // Agregar un formulario para reemplazar el título
+                echo "<h3>Reemplazar Título:</h3>";
+                echo "<form method='post' action=''>";
+                echo "<select name='new_title'>";
+                foreach ($titles['choices'] as $index => $title) {
+                    echo "<option value='$index'>" . esc_html($title['text']) . "</option>";
+                }
+                echo "</select>";
+                echo "<input type='submit' name='replace_title' value='Reemplazar Título'>";
+                echo "</form>";
+
+                // Agregar un enlace para generar palabras clave de SEO
+                echo "<h3>Generar Palabras Clave de SEO:</h3>";
+                echo "<a href='admin-post.php?action=generate_seo_keywords&post_id=$last_post_id' class='button'>Generar Palabras Clave de SEO</a>";
+            }
+        }
+    } else {
+        echo "La última nota no está en estado de borrador.";
+    }
+}
+
+// Reemplazar el título de la nota en borrador
+function replace_draft_title() {
+    if (isset($_POST['replace_title'])) {
+        $new_title_index = intval($_POST['new_title']);
+        $args = array(
+            'numberposts' => 1,
+            'post_status' => 'draft',
+        );
+
+        $last_post = wp_get_recent_posts($args);
+
+        if (!empty($last_post)) {
+            $new_title = $titles['choices'][$new_title_index]['text'];
+            $last_post_id = $last_post[0]['ID'];
+
+            // Actualizar el título de la nota en borrador
+            wp_update_post(array('ID' => $last_post_id, 'post_title' => $new_title));
+            echo "Título reemplazado exitosamente.";
+        }
+    }
+}
+
+// Generar palabras clave de SEO para la nota
+function generate_seo_keywords() {
+    if (isset($_GET['action']) && $_GET['action'] === 'generate_seo_keywords' && isset($_GET['post_id'])) {
+        $post_id = intval($_GET['post_id']);
+        $post_content = get_post_field('post_content', $post_id);
+
+        // Llamada a la API de ChatGPT para generar palabras clave de SEO
+        $api_key = 'TU_CLAVE_DE_API'; // Reemplaza con tu clave de API de ChatGPT
+        $api_endpoint = 'https://api.openai.com/v1/engines/davinci/completions';
+        
+        $headers = array(
+            'Authorization: Bearer ' . $api_key,
+            'Content-Type: application/json',
+        );
+
+        $data = array(
+            'prompt' => "Genera palabras clave de SEO para mi nota: $post_content",
+            'max_tokens' => 30, // Ajusta según tus necesidades
+            'n' => 5, // Generar 5 palabras clave
+        );
+
+        $response = wp_safe_remote_post($api_endpoint, array(
+            'headers' => $headers,
+            'body' => json_encode($data),
+        ));
+
+        if (is_wp_error($response)) {
+            echo "Error al conectar con la API de ChatGPT.";
+        } else {
+            $keywords = json_decode(wp_remote_retrieve_body($response), true);
+
+            if (!empty($keywords['choices'])) {
+                echo "<h3>Palabras Clave de SEO Generadas:</h3>";
+                echo "<ul>";
+                foreach ($keywords['choices'] as $index => $keyword) {
+                    echo "<li>Palabra Clave " . ($index + 1) . ": " . esc_html($keyword['text']) . "</li>";
+                }
+                echo "</ul>";
+            }
+        }
+    }
+}
+
+// Agregar un enlace al panel de administración para ejecutar la verificación, reemplazar el título y generar palabras clave de SEO
+function add_last_post_draft_check_link() {
+    add_submenu_page('tools.php', 'Verificar Último Borrador y Generar/Reemplazar Títulos', 'Verificar Último Borrador y Generar/Reemplazar Títulos', 'manage_options', 'last-post-draft-check', 'check_last_post_draft_and_generate_titles');
+}
+add_action('admin_menu', 'add_last_post_draft_check_link');
+
+// Manejar el reemplazo del título
+add_action('admin_post_replace_title', 'replace_draft_title');
+
+// Manejar la generación de palabras clave de SEO
+add_action('admin_init', 'generate_seo_keywords');
