@@ -1,12 +1,13 @@
 <?php
 /*
-Plugin Name: Plugin de Ejemplo con Títulos y Palabras Clave
+Plugin Name: titulosyseoconinteligenciaartificial
 Description: Un plugin que genera títulos llamativos y palabras clave para SEO y permite reemplazar títulos en notas en borrador.
 Version: 1.0
 Author: Tu Nombre
 */
 
-require_once(__DIR__ . 'otros/config.php');
+require_once(plugin_dir_path(__FILE__) . 'config.php');
+
 
 // Función para cargar el archivo CSS del plugin
 function load_plugin_styles() {
